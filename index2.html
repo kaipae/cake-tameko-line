@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สั่งเค้กทามีโกะ - เชลล์ชวนชิม</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- LIFF SDK -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+
+<body class="bg-orange-50 min-h-screen p-4">
+
+    <div class="max-w-md mx-auto bg-white rounded-3xl shadow-lg overflow-hidden border border-orange-200">
+
+        <!-- Header -->
+        <div class="bg-orange-500 p-6 text-white text-center">
+            <h1 class="text-2xl font-bold">🍰 เค้กทามีโกะ</h1>
+            <p class="text-sm">การันตีความอร่อยโดย "เชลล์ชวนชิม"</p>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6 space-y-6">
+
+            <!-- Product Section -->
+            <section>
+                <h2 class="font-bold text-gray-700 mb-2 text-lg">
+                    ชุด Snack Box (35.-)
+                </h2>
+
+                <div class="bg-orange-100 p-3 rounded-xl border-l-4 border-orange-500 text-sm mb-4">
+                    เค้กไข่เนยสด 2 ชิ้น + เครื่องดื่ม 1 กล่อง
+                </div>
+
+                <label class="block text-sm text-gray-600 mb-1">
+                    เลือกรสชาติเค้ก:
+                </label>
+
+                <select id="flavor"
+                    class="w-full border-2 border-gray-200 rounded-lg p-3 outline-none focus:border-orange-500">
+                    <option value="เนยสดช็อคชิพ">เนยสดช็อคชิพ</option>
+                    <option value="กล้วยหอมช็อคชิพ">กล้วยหอมช็อคชิพ</option>
+                    <option value="อัลมอนด์">อัลมอนด์</option>
+                </select>
+            </section>
+
+            <!-- Delivery Section -->
+            <section class="bg-white border-2 border-dashed border-orange-300 p-4 rounded-xl">
+                <h2 class="font-bold text-orange-700 mb-2">
+                    เช็กคิวจัดส่งเร็วที่สุด:
+                </h2>
+
+                <div id="delivery-info" class="text-gray-600 space-y-1">
+                    <p class="text-sm italic text-gray-400">
+                        กำลังคำนวณเวลา...
+                    </p>
+                </div>
+            </section>
+
+            <!-- Customer Info -->
+            <section class="space-y-3">
+                <input type="text"
+                    id="address"
+                    placeholder="ที่อยู่จัดส่ง (กทม./ปริมณฑล)"
+                    class="w-full border-b-2 border-gray-200 p-2 outline-none focus:border-orange-500">
+
+                <input type="tel"
+                    id="phone"
+                    placeholder="เบอร์โทรศัพท์"
+                    class="w-full border-b-2 border-gray-200 p-2 outline-none focus:border-orange-500">
+            </section>
+
+            <!-- Order Button -->
+            <button onclick="sendOrder()"
+                class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-2xl transition-all shadow-md active:scale-95">
+                ยืนยันการสั่งซื้อ
+            </button>
+
+        </div>
+    </div>
+
+
+<script>
+    // 🔥 Calculate delivery time
+    function calculateDelivery() {
+        const now = new Date();
+        const hour = now.getHours();
+        const deliveryInfo = document.getElementById('delivery-info');
+
+        let message = "";
+        let earliestDate = new Date();
+
+        if (hour < 7) {
+            message = `
+                🚀 <b>ด่วนพิเศษ!</b><br>
+                สั่งก่อน 07:00 น.<br>
+                รับของได้:
+                <span class="text-green-600 font-bold underline">
+                ช่วงบ่ายวันนี้
+                </span>
+            `;
+        } else {
+            earliestDate.setDate(now.getDate() + 1);
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            const dateStr = earliestDate.toLocaleDateString('th-TH', options);
+
+            message = `
+                📅 รอบส่งปกติ:<br>
+                รับของเร็วที่สุด:
+                <span class="text-orange-600 font-bold underline">
+                ${dateStr}
+                </span>
+            `;
+        }
+
+        deliveryInfo.innerHTML = message;
+    }
+
+
+    // 🚀 Send order to LINE chat
+    async function sendOrder() {
+
+        const flavor = document.getElementById('flavor').value;
+        const address = document.getElementById('address').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+
+        if (!address || !phone) {
+            alert('กรุณากรอกข้อมูลให้ครบถ้วนครับ');
+            return;
+        }
+
+        const orderSummary = `🛒 ออเดอร์ใหม่ (เชลล์ชวนชิม)
+
+รสชาติ: ${flavor}
+ที่อยู่จัดส่ง: ${address}
+เบอร์โทร: ${phone}
+
+(สั่งซื้อผ่านระบบ LIFF)`;
+
+        try {
+
+            await liff.sendMessages([
+                {
+                    type: 'text',
+                    text: orderSummary
+                }
+            ]);
+
+            alert("ส่งออเดอร์เรียบร้อยแล้ว ✅");
+            liff.closeWindow();
+
+        } catch (error) {
+            console.error("Send message error:", error);
+            alert("เกิดข้อผิดพลาดในการส่งข้อความ");
+        }
+    }
+
+
+    // 🔐 Initialize LIFF
+    async function initializeLiff() {
+        try {
+
+            await liff.init({
+                liffId: "ใส่_LIFF_ID_ของคุณที่นี่"
+            });
+
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            }
+
+        } catch (error) {
+            console.error("LIFF initialization failed", error);
+        }
+    }
+
+
+    // Start app
+    window.onload = function () {
+        calculateDelivery();
+        initializeLiff();
+    };
+</script>
+
+</body>
+</html>

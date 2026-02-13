@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Order Mini App</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      margin: auto;
+    }
+    h2 {
+      text-align: center;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #06C755;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #05a648;
+    }
+    .success {
+      color: green;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+  <h2>🛒 Order Form</h2>
+
+  <label>Name</label>
+  <input type="text" id="name" placeholder="Your name">
+
+  <label>Phone Number</label>
+  <input type="tel" id="phone" placeholder="Your phone number">
+
+  <label>Order Details</label>
+  <textarea id="order" placeholder="What would you like to order?"></textarea>
+
+  <label>Upload Payment Slip</label>
+  <input type="file" id="slip" accept="image/*">
+
+  <button onclick="shareLocation()">📍 Share Location</button>
+  <button onclick="payNow()">💳 Pay Now</button>
+  <button onclick="submitOrder()">✅ Submit Order</button>
+
+  <p class="success" id="status"></p>
+</div>
+
+<script>
+  let userId = "";
+  let displayName = "";
+
+  async function initializeLiff() {
+    await liff.init({ liffId: "YOUR_LIFF_ID" });
+
+    if (!liff.isLoggedIn()) {
+      liff.login();
+    }
+
+    const profile = await liff.getProfile();
+    userId = profile.userId;
+    displayName = profile.displayName;
+
+    document.getElementById("name").value = displayName;
+  }
+
+  async function shareLocation() {
+    await liff.sendMessages([
+      {
+        type: "location",
+        title: "Customer Location",
+        address: "Shared via LIFF",
+        latitude: 0,
+        longitude: 0
+      }
+    ]);
+    alert("Location request sent.");
+  }
+
+  function payNow() {
+    // Replace with your LINE Pay payment URL
+    window.location.href = "https://pay.line.me/";
+  }
+
+  async function submitOrder() {
+    const name = document.getElementById("name").value;
+    const phone = document.getElementById("phone").value;
+    const order = document.getElementById("order").value;
+
+    await liff.sendMessages([
+      {
+        type: "text",
+        text: `New Order:
+Name: ${name}
+Phone: ${phone}
+Order: ${order}
+UserID: ${userId}`
+      }
+    ]);
+
+    document.getElementById("status").innerText = "Order sent successfully!";
+    liff.closeWindow();
+  }
+
+  initializeLiff();
+</script>
+</body>
+</html>
